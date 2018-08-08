@@ -23,7 +23,7 @@ rm(list=ls())
 # have a normal distribution of conditions with mean 100 and standard deviation 10.
 mean <- 100
 standard_deviation <- 10
-co <- rnorm(100, mean, standard_deviation)
+co <- rnorm(1, mean, standard_deviation)
 
 # variable age to track the age of a single female. Set age to the appropriate
 # value for a female that has just become recruited
@@ -38,8 +38,14 @@ alive <- 1
 # variables enMu and enSD. A high value of enMu will indicate a rich environment and a
 # high value of enSD will indicate a variable environment. To begin with, set these values
 # to 0 and 20 respectively.
-enMu <- 0
-enSD <- 20
+
+# default
+#enMu <- 0
+#enSD <- 20
+
+# scenario 1
+enMu <- 20
+enSD <- 1
 
 # The variable sr will represent the survival rate within the population of reproductive
 # female whales (i.e. probability of a randomly selected whale from that population of
@@ -52,14 +58,89 @@ sr <- 0.8
 s0 <- -2
 s1 <- 0.05
 
-# loop that runs while a female is alive and of a reproductive age.
-while (alive == 1 && age >= 15 && age <= 40) {
-    # allow the whale to survive with the probability sr
-    survival_probability = rbinom(1, 1, sr)
+# if a female has calf, set to 1 else 0
+calf <- 0
 
-    # if it does, increment its age by 1.
-    if (survival_probability > sr) {
-        age = age + 1
+# track the age of a calf
+calfage <- 0
+
+# track the number of calves that become independent of their mothers
+offspring <- 0
+
+# breeding probability of a reproductive female whales
+b <- 0
+
+# the relationship between the condition of a whale and its breeding probability and hence will
+# be used to model the influence of the whales condition on its breeding probability
+b0 <- -10
+b1 <- 0.1
+
+# effect of annual maternal investment on a female’s condition
+inv <- 10
+
+# store the total number of offspring that reach recruitment from each female whale and
+# the age at which females stop breeding
+recruits <- c()
+ages <- c()
+
+# simulate 1000 female life histories
+# loop that runs while a female is alive and of a reproductive age.
+i <- 1
+while (i <= 1000) {
+    while (alive == 1 && age <= 40) {
+        # allow the whale to survive with the probability sr
+        # We assume that these annual condition increments are normally distributed and independent
+        # between successive years. enMu represents the mean and enSD represents the standard deviation
+        # of that distribution. annual increment of the individual condition
+
+        x1 <- rbinom(1, 1, sr)
+        x2 <- rnorm(1, enMu, enSD)
+
+        co <- co + x2
+        sr <- exp(s0 + s1 * co) / (1 + exp(s0 + s1 * co))
+
+        if (x1 == 1) {
+            age <- age + 1
+        } else {
+            alive <- 0
+        }
+
+        if (calf == 0) {
+            b <- exp(b0 + b1 * co) / (1 + exp(b0 + b1 * co))
+
+            # Bernoulli trial (i.e. a binomial experiment with one trial), to simulate the event of birth
+            x3 <- rbinom(1, 1, b)
+            if (x3 == 1) {
+                calf <- 1
+            }
+        } else if (calf == 1) {
+            b0 <- b0 -inv
+
+            # check calfs survival rate, set calf and calfage to 0 if died, else increment age by 1
+            calf_survival <- rbinom(1, 1, b1)
+            if (calf_survival == 0) {
+                calf <- 0
+                calfage <- 0
+            } else {
+                calfage <- calfage + 1
+            }
+        }
+
+        # check calf reached the age of independence, if yes, increase number of mothers offspring
+        # and, reset calf and calfage to 0
+        if (calfage == 4) {
+            offspring <- offspring + 1
+            calf <- 0
+            calfage <- 0
+        }
+
+        # storing the female's final age and its total number of recruited offspring into the lists
+        # ages and recruits respectively
+        recruits <- c(recruits, offspring)
+        ages <- c(ages, age)
     }
+    i <- i + 1
 }
-print.default(age)
+
+# plot histogram of ages
+hist(ages)
