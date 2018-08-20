@@ -51,12 +51,12 @@ while (i <= 1000) {
     # to 0 and 20 respectively.
 
     # default
-    #enMu <- 0
-    #enSD <- 20
+    enMu <- 0
+    enSD <- 20
 
     # scenario 1
-    enMu <- 20
-    enSD <- 1
+    #enMu <- 20
+    #enSD <- 1
 
     # scenario 2
     #enMu <- 2
@@ -165,6 +165,10 @@ while (i <= 1000) {
 }
 
 # plot histogram of ages
-hist(ages)
-hist(recruits)
+hist(ages, col=c("blue"))
+legend("topright", c("Ages"), fill=c("blue"))
+
+hist(recruits, col=c("red"))
+legend("topright", c("Recruits"), fill=c("red"))
+
 average_recruits <- mean(recruits)
